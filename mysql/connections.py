@@ -24,9 +24,10 @@ class FileConnection(Connection):
         self.delimiter='\t'
         self.sql_context = SQLContext(self.spark_context)
         self.header=None
+        self.header_string = None
 
     def read_file_to_rdd(self):
-        # self.rdd = self.spark_context.textFile(self.file_path)
+        self.rdd = self.spark_context.textFile(self.file_path)
         pass
 
 
@@ -39,24 +40,23 @@ class FileConnection(Connection):
             #return self.delimiter
             return '\t'
 
+        # If header record in file, use that else use the parameter passed
+        if self.header:
+            header_record = self.rdd.first()
+        else:
+            header_record = self.header_string
+
         # Split lines to structured lines
-        self.rdd = self.spark_context.textFile(self.file_path)
-        #delimit=self.delimit
-        self.delimit='\t'
-        header_record = self.rdd.first()
-        print (header_record)
         rows = self.rdd.filter(lambda line: line != header_record)
         delimited_rows = rows.map(lambda line: line.split(get_delimiter()))
 
         # Convert structured lines to tuple
-        #print rows.count()
         tuples = delimited_rows.map(generate_tuple)
 
 
         ## Associate tuples to schema
         #  Generate schema
-        if self.header is True:
-            schema = self.generate_schema(' '.join(self.header_string.split(self.delimiter)))
+        schema = self.generate_schema(' '.join(header_record.split(self.delimiter)))
         return self.sql_context.createDataFrame(
                                 data=tuples,
                                 schema=schema,

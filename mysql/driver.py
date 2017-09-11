@@ -16,4 +16,4 @@ if __name__ == "__main__":
     file_path = 'file:///home/senthil/code/pyspark/fraud/data/skin.txt'
     connection = FileConnection(spark_context,file_path)
     data_frame=connection.read_into_df(delimiter='\t',header=True,header_string=HEADER)
-    print (data_frame.count())
+    print (data_frame.first())
